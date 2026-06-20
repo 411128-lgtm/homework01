@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>每日氣象與穿搭小幫手</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --background-color: #f5f7fa;
+            --card-color: #ffffff;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 500px;
+            width: 100%;
+            background: var(--card-color);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 25px;
+            font-size: 24px;
+        }
+        .weather-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .weather-temp {
+            font-size: 36px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .suggestion-box {
+            background: #eef2f7;
+            border-left: 5px solid var(--primary-color);
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 25px;
+            font-weight: 500;
+            color: #444;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background-color: #357abd;
+        }
+        .status-msg {
+            text-align: center;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🌤️ 氣象穿搭小幫手</h1>
+    
+    <div class="weather-box">
+        <div id="location">正在定位天氣資訊...</div>
+        <div class="weather-temp" id="temp">-- °C</div>
+        <div id="weather-desc">請稍候</div>
+    </div>
+
+    <div class="suggestion-box" id="suggestion">
+        💡 穿搭建議：載入中...
+    </div>
+
+    <form id="outfitForm">
+        <div class="form-group">
+            <label for="userName">名字 / 暱稱</label>
+            <input type="text" id="userName" required placeholder="例如：小明">
+        </div>
+
+        <div class="form-group">
+            <label for="outfitDetail">今日穿搭內容</label>
+            <textarea id="outfitDetail" rows="3" required placeholder="例如：白T + 牛仔長褲 + 薄外套"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="mood">今日心情</label>
+            <select id="mood">
+                <option value="😃 開心">😃 開心</option>
+                <option value="😐 平淡">😐 平淡</option>
+                <option value="😴 想睡">😴 想睡</option>
+                <option value="😭 崩潰">😭 崩潰</option>
+            </select>
+        </div>
+
+        <button type="submit" id="submitBtn">將穿搭紀錄儲存至雲端</button>
+    </form>
+    
+    <div class="status-msg" id="statusMsg"></div>
+</div>
+
+<script>
+    // 這裡使用公開的免金鑰天氣 API (或可以使用中央氣象署 API)
+    // 為了讓你能直接執行，先採用免註冊的 open-meteo API 抓取台北天氣
+    async function fetchWeather() {
+        try {
+            const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=25.0478&longitude=121.5319&current_weather=true');
+            const data = await res.json();
+            
+            const temp = Math.round(data.current_weather.temperature);
+            document.getElementById('location').innerText = '📍 目前位置：台北市';
+            document.getElementById('temp').innerText = `${temp} °C`;
+            
+            // 根據溫度給予穿搭建議 (前端動態網頁效果)
+            let suggestion = '';
+            if (temp >= 28) {
+                suggestion = '天氣炎熱，建議穿著短袖、短褲，注意防曬並多喝水！';
+            } else if (temp >= 20) {
+                suggestion = '舒適舒爽，穿一件舒適的長袖或短袖加薄外套就很剛好。';
+            } else {
+                suggestion = '天氣較冷，請記得穿上厚外套、長褲，注意保暖防風！';
+            }
+            document.getElementById('weather-desc').innerText = '天氣狀態穩定';
+            document.getElementById('suggestion').innerText = `💡 穿搭建議：${suggestion}`;
+            
+        } catch (error) {
+            document.getElementById('location').innerText = '無法載入天氣資料';
+            console.error(error);
+        }
+    }
+
+    // 網頁載入時自動執行 API 呼叫
+    fetchWeather();
+
+    // 處理表單送出（串接 GAS）
+    document.getElementById('outfitForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const submitBtn = document.getElementById('submitBtn');
+        const statusMsg = document.getElementById('statusMsg');
+        
+        submitBtn.disabled = true;
+        statusMsg.innerText = '正在傳送資料到 Google 試算表...';
+        statusMsg.style.color = '#666';
+
+        // 收集資料
+        const formData = {
+            name: document.getElementById('userName').value,
+            temp: document.getElementById('temp').innerText,
+            outfit: document.getElementById('outfitDetail').value,
+            mood: document.getElementById('mood').value
+        };
+
+        // ⚠️ 這裡的網址等一下在第三步設定完 GAS 後要換掉！
+        const GAS_WEB_APP_URL = 'YOUR_GAS_WEB_APP_URL_HERE';
+
+        try {
+            // 使用 URLSearchParams 傳遞資料以避免跨域問題 (CORS)
+            const params = new URLSearchParams(formData);
+            
+            await fetch(`${GAS_WEB_APP_URL}?${params.toString()}`, {
+                method: 'POST',
+                mode: 'no-cors' // 配合 GAS 的簡易設定
+            });
+
+            statusMsg.innerText = '🎉 儲存成功！資料已寫入 Google 試算表！';
+            statusMsg.style.color = 'green';
+            document.getElementById('outfitForm').reset();
+        } catch (error) {
+            // 注意：因為 no-cors 模式，即使成功有時也會進到 catch，但只要試算表有收到就沒問題
+            statusMsg.innerText = '請確認已將 GAS 網址貼入程式碼中！';
+            statusMsg.style.color = 'orange';
+            console.error(error);
+        } finally {
+            submitBtn.disabled = false;
+        }
+    });
+</script>
+
+</body>
+</html>
